@@ -590,7 +590,9 @@ const graph = builder.compile();
 
 ## Add persistence
 
-You only need to **provide the checkpointer when compiling the parent graph**. LangGraph will automatically propagate the checkpointer to the child subgraphs.
+You only need to **provide the checkpointer when compiling the parent graph**. LangGraph will automatically propagate the checkpointer to the child subgraphs. Subgraph checkpoints are stored under a namespace derived from the node name (e.g., `node_1:`). This is the most common pattern for enabling persistence.
+
+With automatic propagation, you can access subgraph state externally via the `subgraphs` option on the get state method. See [View subgraph state](#view-subgraph-state) for details.
 
 :::python
 ```python
@@ -650,7 +652,9 @@ const graph = builder.compile({ checkpointer });
 ```
 :::
 
-If you want the subgraph to **have its own memory**, you can compile it with the appropriate checkpointer option. This is useful in [multi-agent](/oss/langchain/multi-agent) systems, if you want agents to keep track of their internal message histories:
+### Subgraph-specific memory
+
+If you want the subgraph to **have its own internal memory** that persists across parent graph invocations, compile it with `checkpointer=True` (Python) or `checkpointer: true` (JS). This gives the subgraph an independent checkpoint history within the parent's checkpointer storage. This is useful in [multi-agent](/oss/langchain/multi-agent) systems where you want agents to keep track of their own internal message histories across invocations:
 
 :::python
 ```python
@@ -668,20 +672,29 @@ const subgraph = subgraphBuilder.compile({ checkpointer: true });
 
 ## View subgraph state
 
-When you enable [persistence](/oss/langgraph/persistence), you can [inspect the graph state](/oss/langgraph/persistence#checkpoints) (checkpoint) via the appropriate method. To view the subgraph state, you can use the subgraphs option.
+When you enable [persistence](/oss/langgraph/persistence), you can [inspect the graph state](/oss/langgraph/persistence#checkpoints) (checkpoint) via the appropriate method. To include subgraph state in the result, pass the subgraphs option. The returned `StateSnapshot` includes nested `StateSnapshot` objects accessible via `.tasks[<task_index>].state`.
 
 :::python
-You can inspect the graph state via `graph.get_state(config)`. To view the subgraph state, you can use `graph.get_state(config, subgraphs=True)`.
+```python
+state = graph.get_state(config, subgraphs=True)
+subgraph_state = state.tasks[0].state  # nested StateSnapshot
+```
 :::
 
 :::js
-You can inspect the graph state via `graph.getState(config)`. To view the subgraph state, you can use `graph.getState(config, { subgraphs: true })`.
+```typescript
+const state = await graph.getState(config, { subgraphs: true });
+const subgraphState = state.tasks[0].state; // nested StateSnapshot
+```
 :::
 
-<Warning>
-**Available **only** when interrupted**
-Subgraph state can only be viewed **when the subgraph is interrupted**. Once you resume the graph, you won't be able to access the subgraph state.
-</Warning>
+<Note>
+Subgraph state is available whenever the parent graph has a checkpointer and the subgraph node has pending or completed tasks — not only during interrupts.
+</Note>
+
+### Access subgraph state at an interrupt
+
+A common use case is inspecting subgraph state when the subgraph is [interrupted](/oss/langgraph/interrupts). While the graph is paused, you can view the subgraph state, and then resume execution.
 
 <Accordion title="View interrupted subgraph state">
   :::python
@@ -717,18 +730,16 @@ Subgraph state can only be viewed **when the subgraph is interrupted**. Once you
 
   config = {"configurable": {"thread_id": "1"}}
 
+  # Graph will pause at the interrupt
   graph.invoke({"foo": ""}, config)
-  parent_state = graph.get_state(config)
 
-  # This will be available only when the subgraph is interrupted.
-  # Once you resume the graph, you won't be able to access the subgraph state.
-  subgraph_state = graph.get_state(config, subgraphs=True).tasks[0].state
+  # View subgraph state while interrupted
+  state = graph.get_state(config, subgraphs=True)
+  subgraph_state = state.tasks[0].state
 
-  # resume the subgraph
+  # Resume the subgraph
   graph.invoke(Command(resume="bar"), config)
   ```
-
-  1. This will be available only when the subgraph is interrupted. Once you resume the graph, you won't be able to access the subgraph state.
   :::
 
   :::js
@@ -760,12 +771,114 @@ Subgraph state can only be viewed **when the subgraph is interrupted**. Once you
 
   const config = { configurable: { thread_id: "1" } };
 
+  // Graph will pause at the interrupt
   await graph.invoke({ foo: "" }, config);
-  const parentState = await graph.getState(config);
-  const subgraphState = (await graph.getState(config, { subgraphs: true })).tasks[0].state;   // [!code highlight]
 
-  // resume the subgraph
+  // View subgraph state while interrupted
+  const state = await graph.getState(config, { subgraphs: true });
+  const subgraphState = state.tasks[0].state;
+
+  // Resume the subgraph
   await graph.invoke(new Command({ resume: "bar" }), config);
+  ```
+  :::
+</Accordion>
+
+### Get subgraph state history
+
+You can retrieve the full checkpoint history of a subgraph by passing the subgraph's `StateSnapshot` config to the state history method. This is useful for debugging or auditing subgraph execution.
+
+:::python
+```python
+state = graph.get_state(config, subgraphs=True)
+subgraph_config = state.tasks[0].state.config
+child_history = list(graph.get_state_history(subgraph_config))
+```
+:::
+
+:::js
+```typescript
+const state = await graph.getState(config, { subgraphs: true });
+const subgraphConfig = state.tasks[0].state.config;
+const childHistory = [];
+for await (const snapshot of graph.getStateHistory(subgraphConfig)) {
+  childHistory.push(snapshot);
+}
+```
+:::
+
+### Update subgraph state
+
+You can update subgraph state by passing the subgraph's state config to the update state method. This is useful for modifying subgraph state during [human-in-the-loop](/oss/langgraph/interrupts) workflows.
+
+:::python
+```python
+state = graph.get_state(config, subgraphs=True)
+# Update the subgraph state
+graph.update_state(state.tasks[0].state.config, {"foo": "new_value"})
+```
+
+You can also specify `as_node` to control which node the update is applied as:
+
+```python
+graph.update_state(
+    state.tasks[0].state.config,
+    {"foo": "new_value"},
+    as_node="subgraph_node_1",
+)
+```
+:::
+
+:::js
+```typescript
+const state = await graph.getState(config, { subgraphs: true });
+// Update the subgraph state
+await graph.updateState(state.tasks[0].state.config, { foo: "newValue" });
+```
+
+You can also specify `asNode` to control which node the update is applied as:
+
+```typescript
+await graph.updateState(
+  state.tasks[0].state.config,
+  { foo: "newValue" },
+  "subgraphNode1"
+);
+```
+:::
+
+### Multi-level nested state access
+
+<Accordion title="Access state across multiple levels of subgraphs">
+  For graphs with multiple levels of nesting (parent → child → grandchild), you can traverse the state hierarchy by accessing `.tasks[0].state` at each level.
+
+  :::python
+  ```python
+  # Get parent state with subgraph state included
+  parent_state = graph.get_state(config, subgraphs=True)
+
+  # Access child subgraph state
+  child_state = parent_state.tasks[0].state
+
+  # Access grandchild subgraph state (if the child also has subgraphs)
+  grandchild_state = graph.get_state(
+      child_state.config, subgraphs=True
+  ).tasks[0].state
+  ```
+  :::
+
+  :::js
+  ```typescript
+  // Get parent state with subgraph state included
+  const parentState = await graph.getState(config, { subgraphs: true });
+
+  // Access child subgraph state
+  const childState = parentState.tasks[0].state;
+
+  // Access grandchild subgraph state (if the child also has subgraphs)
+  const grandchildState = (
+    await graph.getState(childState.config, { subgraphs: true })
+  ).tasks[0].state;
   ```
   :::
 </Accordion>

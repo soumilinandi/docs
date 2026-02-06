@@ -227,6 +227,10 @@ StateSnapshot {
 ```
 :::
 
+<Tip>
+If your graph uses [subgraphs](/oss/langgraph/use-subgraphs), you can include subgraph state in the response by passing the `subgraphs` option. See [View subgraph state](/oss/langgraph/use-subgraphs#view-subgraph-state) for details.
+</Tip>
+
 ### Get state history
 
 :::python
@@ -420,6 +424,10 @@ In our example, the output of `getStateHistory` will look like this:
 
 ![State](/oss/images/get_state.jpg)
 
+<Tip>
+You can also retrieve the checkpoint history of a subgraph by passing the subgraph's state config to the state history method. See [Get subgraph state history](/oss/langgraph/use-subgraphs#get-subgraph-state-history) for details.
+</Tip>
+
 ### Replay
 
 It's also possible to play-back a prior graph execution. If we `invoke` a graph with a `thread_id` and a `checkpoint_id`, then we will _re-play_ the previously executed steps _before_ a checkpoint that corresponds to the `checkpoint_id`, and only execute the steps _after_ the checkpoint.
@@ -559,6 +567,10 @@ The final thing you can optionally specify when calling `updateState` is `asNode
 :::
 
 ![Update](/oss/images/checkpoints_full_story.jpg)
+
+<Tip>
+You can update subgraph state by passing the subgraph's state config to the update state method. See [Update subgraph state](/oss/langgraph/use-subgraphs#update-subgraph-state) for details.
+</Tip>
 
 ## Memory store
 
