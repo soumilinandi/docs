@@ -39,7 +39,7 @@ def make_backend(runtime):
     )
 
 agent = create_deep_agent(
-    store=InMemoryStore(),  # Required for StoreBackend
+    store=InMemoryStore(),  # Good for local dev; omit for LangSmith Deployment
     backend=make_backend,
     checkpointer=checkpointer
 )
