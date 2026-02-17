@@ -622,6 +622,24 @@ result = agent.invoke(
 For more details on message types and formatting, see [Messages](/oss/python/langchain/messages). For comprehensive middleware documentation, see [Middleware](/oss/python/langchain/middleware).
 </Tip>
 
+### Name
+
+Set an optional [`name`](https://reference.langchain.com/python/langchain/agents/#langchain.agents.create_agent(name)) for the agent. This is used as the node identifier when adding the agent as a subgraph in [multi-agent systems](/oss/python/langgraph/multi-agent):
+
+```python
+agent = create_agent(
+    model,
+    tools,
+    name="research_assistant"
+)
+```
+
+
+
+<Warning>
+    Prefer `snake_case` for agent names (e.g., `research_assistant` instead of `Research Assistant`). Some model providers reject names containing spaces or special characters with errors. Using alphanumeric characters, underscores, and hyphens only ensures compatibility across all providers. The same applies to [tool names](/oss/python/langchain/tools).
+</Warning>
+
 ## Invocation
 
 You can invoke an agent by passing an update to its [`State`](/oss/python/langgraph/graph-api#state). All agents include a [sequence of messages](/oss/python/langgraph/use-graph-api#messagesstate) in their state; to invoke the agent, pass a new message:
