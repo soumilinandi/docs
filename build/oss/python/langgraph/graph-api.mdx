@@ -308,7 +308,7 @@ builder.add_node("node_with_config", node_with_config)
 
 
 
-Behind the scenes, functions are converted to [`RunnableLambda`](https://reference.langchain.com/python/langchain-core/runnables/base/RunnableLambda), which add batch and async support to your function, along with native tracing and debugging.
+Behind the scenes, functions are converted to [`RunnableLambda`](https://reference.langchain.com/python/langchain-core/runnables/base/RunnableLambda), which add batch and async support to your function, along with [native tracing and debugging](/langsmith/home).
 
 If you add a node to a graph without specifying a name, it will be given a default name equivalent to the function name.
 
@@ -853,6 +853,10 @@ def inspect_metadata(state: dict, config: RunnableConfig) -> dict:
 ## Visualization
 
 It's often nice to be able to visualize graphs, especially as they get more complex. LangGraph comes with several built-in ways to visualize graphs. See [this how-to guide](/oss/python/langgraph/use-graph-api#visualize-your-graph) for more info.
+
+## Observability and Tracing
+
+To trace, debug and evaluate your agents, use [LangSmith](/langsmith/home).
 
 ## Learn more
 
