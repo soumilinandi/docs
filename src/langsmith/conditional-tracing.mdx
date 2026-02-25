@@ -190,6 +190,54 @@ with ls.tracing_context(enabled=False):
 
 This can be useful when you want to temporarily enable tracing for debugging within a normally non-traced section.
 
+## Customize tracing in deployed graphs
+
+When using a [factory function](/langsmith/graph-rebuild) to rebuild your graph at runtime, you can wrap the yielded graph with `tracing_context` to control tracing per-execution. This is useful for disabling tracing entirely for a specific graph, or for customizing tracing based on the authenticated user.
+
+### Disable tracing for a graph
+
+```python
+import contextlib
+import langsmith as ls
+from langgraph_sdk.runtime import ServerRuntime
+
+
+@contextlib.asynccontextmanager
+async def make_graph(runtime: ServerRuntime):
+    graph = build_my_graph()
+
+    with ls.tracing_context(enabled=False):
+        yield graph
+```
+
+### Per-tenant tracing
+
+```python
+import contextlib
+import langsmith as ls
+from langgraph_sdk.runtime import ServerRuntime
+
+
+@contextlib.asynccontextmanager
+async def make_graph(runtime: ServerRuntime):
+    graph = build_my_graph()
+    user = runtime.user
+
+    # Route traces to a per-tenant project, or disable tracing entirely
+    if user and should_disable_tracing(user.identity):
+        with ls.tracing_context(enabled=False):
+            yield graph
+    elif user:
+        with ls.tracing_context(
+            enabled=True,
+            project_name=f"tenant-{user.identity}",
+            metadata={"user_id": user.identity},
+        ):
+            yield graph
+    else:
+        yield graph
+```
+
 ## Reusable tracing wrapper
 
 Create a decorator to automatically apply conditional tracing logic.
