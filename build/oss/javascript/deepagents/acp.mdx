@@ -1,0 +1,551 @@
+---
+title: Agent Client Protocol (ACP)
+description: Expose Deep Agents over the Agent Client Protocol (ACP) to integrate with code editors and IDEs.
+---
+[Agent Client Protocol (ACP)](https://agentclientprotocol.com/get-started/introduction) standardizes communication between coding agents and code editors or IDEs.
+With the ACP protocol, you can make use of your custom deep agents with any ACP-compatible client, allowing your code editor to provide project context and receive rich updates.
+
+<Note>
+    ACP is designed for agent-editor integrations. If you want your agent to call tools hosted by external servers, see [Model Context Protocol (MCP)](/oss/javascript/langchain/mcp/).
+</Note>
+
+## Quickstart
+
+Install the ACP integration package:
+
+
+
+<CodeGroup>
+```bash npm
+npm install deepagents-acp
+```
+
+```bash yarn
+yarn add deepagents-acp
+```
+
+```bash pnpm
+pnpm add deepagents-acp
+```
+</CodeGroup>
+
+
+Then expose a Deep Agent over ACP.
+
+This starts an ACP server in stdio mode (it reads requests from stdin and writes responses to stdout). In practice, you usually run this as a command launched by an ACP client (for example, your editor), which then communicates with the server over stdio.
+
+
+
+```typescript icon="server"
+import { startServer } from "deepagents-acp";
+
+await startServer({
+  agents: {
+    name: "coding-assistant",
+    description: "AI coding assistant with filesystem access",
+  },
+  workspaceRoot: process.cwd(),
+});
+```
+
+You can also use the CLI without writing any code:
+
+```bash
+npx deepagents-acp
+```
+
+
+
+
+
+<Card title="DeepAgents ACP on npm" icon="brand-npm" href="https://www.npmjs.com/package/deepagents-acp">
+  The `deepagents-acp` package provides both a CLI and a programmatic API for exposing deep agents over ACP.
+</Card>
+
+
+## Clients
+
+Deep agents works anywhere you can run an ACP agent server. Some notable ACP clients include:
+
+- [Zed](https://zed.dev/docs/ai/external-agents)
+- [JetBrains IDEs](https://www.jetbrains.com/help/ai-assistant/acp.html)
+- Visual Studio Code (via [vscode-acp](https://github.com/formulahendry/vscode-acp))
+- Neovim (via ACP-compatible plugins)
+
+### Zed
+
+
+
+Register your deep agent with [Zed](https://zed.dev/docs/ai/external-agents) by adding it to your Zed settings (`~/.config/zed/settings.json` on Linux, `~/Library/Application Support/Zed/settings.json` on macOS):
+
+**Simple setup (no code required):**
+
+```json
+{
+  "agent": {
+    "profiles": {
+      "deepagents": {
+        "name": "DeepAgents",
+        "command": "npx",
+        "args": ["deepagents-acp"],
+        "env": {
+          "ANTHROPIC_API_KEY": "sk-ant-..."
+        }
+      }
+    }
+  }
+}
+```
+
+**With CLI options:**
+
+```json
+{
+  "agent": {
+    "profiles": {
+      "deepagents": {
+        "name": "DeepAgents",
+        "command": "npx",
+        "args": [
+          "deepagents-acp",
+          "--name", "my-assistant",
+          "--skills", "./skills",
+          "--debug"
+        ],
+        "env": {
+          "ANTHROPIC_API_KEY": "sk-ant-..."
+        }
+      }
+    }
+  }
+}
+```
+
+**Custom server script:**
+
+For more control, create a TypeScript server script:
+
+```typescript
+// server.ts
+import { startServer } from "deepagents-acp";
+
+await startServer({
+  agents: {
+    name: "my-agent",
+    description: "My custom coding agent",
+    skills: ["./skills/"],
+  },
+});
+```
+
+Then point Zed at it:
+
+```json
+{
+  "agent": {
+    "profiles": {
+      "my-agent": {
+        "name": "My Agent",
+        "command": "npx",
+        "args": ["tsx", "./server.ts"]
+      }
+    }
+  }
+}
+```
+
+Open Zed's Agents panel and start a DeepAgents thread.
+
+
+
+
+
+### ACP Registry
+
+DeepAgents is available in the [ACP Agent Registry](https://agentclientprotocol.com/registry/index) for one-click installation in Zed and JetBrains IDEs. When an ACP client supports the registry, users can discover and install Deep Agents without any manual configuration.
+
+
+
+## CLI reference
+
+The CLI is the fastest way to start an ACP server. It requires no code — just run `npx deepagents-acp` and connect your editor.
+
+```bash
+npx deepagents-acp [options]
+```
+
+| Option                 | Short | Description                                       |
+| ---------------------- | ----- | ------------------------------------------------- |
+| `--name <name>`        | `-n`  | Agent name (default: `"deepagents"`)              |
+| `--description <desc>` | `-d`  | Agent description                                 |
+| `--model <model>`      | `-m`  | LLM model (default: `"claude-sonnet-4-5-20250929"`) |
+| `--workspace <path>`   | `-w`  | Workspace root directory (default: cwd)           |
+| `--skills <paths>`     | `-s`  | Comma-separated skill paths                       |
+| `--memory <paths>`     |       | Comma-separated AGENTS.md paths                   |
+| `--debug`              |       | Enable debug logging to stderr                    |
+| `--help`               | `-h`  | Show help message                                 |
+| `--version`            | `-v`  | Show version                                      |
+
+### Environment variables
+
+| Variable            | Description                                    |
+| ------------------- | ---------------------------------------------- |
+| `ANTHROPIC_API_KEY` | API key for Anthropic/Claude models (required) |
+| `OPENAI_API_KEY`    | API key for OpenAI models                      |
+| `DEBUG`             | Set to `"true"` to enable debug logging        |
+| `WORKSPACE_ROOT`    | Alternative to `--workspace` flag              |
+
+
+
+## Programmatic API
+
+### `startServer`
+
+Convenience function to create and start a server in one call:
+
+```typescript
+import { startServer } from "deepagents-acp";
+
+const server = await startServer({
+  agents: {
+    name: "coding-assistant",
+    description: "AI coding assistant with filesystem access",
+  },
+  workspaceRoot: process.cwd(),
+});
+```
+
+### `DeepAgentsServer`
+
+For full control, use the `DeepAgentsServer` class directly:
+
+```typescript
+import { DeepAgentsServer } from "deepagents-acp";
+
+const server = new DeepAgentsServer({
+  agents: [
+    {
+      name: "code-agent",
+      description: "Full-featured coding assistant",
+      model: "claude-sonnet-4-5-20250929",
+      skills: ["./skills/"],
+      memory: ["./.deepagents/AGENTS.md"],
+    },
+    {
+      name: "reviewer",
+      description: "Code review specialist",
+      systemPrompt: "You are a code review expert...",
+    },
+  ],
+  serverName: "my-deepagents-acp",
+  serverVersion: "1.0.0",
+  workspaceRoot: process.cwd(),
+  debug: true,
+});
+
+await server.start();
+```
+
+#### Server options
+
+| Option          | Type                                   | Default              | Description                          |
+| --------------- | -------------------------------------- | -------------------- | ------------------------------------ |
+| `agents`        | `DeepAgentConfig \| DeepAgentConfig[]` | required             | Agent configuration(s)               |
+| `serverName`    | `string`                               | `"deepagents-acp"`   | Server name for ACP                  |
+| `serverVersion` | `string`                               | `"0.0.1"`            | Server version                       |
+| `workspaceRoot` | `string`                               | `process.cwd()`      | Workspace root directory             |
+| `debug`         | `boolean`                              | `false`              | Enable debug logging                 |
+
+#### Agent configuration
+
+| Option         | Type                                           | Description                                       |
+| -------------- | ---------------------------------------------- | ------------------------------------------------- |
+| `name`         | `string`                                       | Unique agent name (required)                      |
+| `description`  | `string`                                       | Agent description                                 |
+| `model`        | `string`                                       | LLM model (default: `"claude-sonnet-4-5-20250929"`) |
+| `tools`        | `StructuredTool[]`                             | Custom LangChain tools                            |
+| `systemPrompt` | `string`                                       | Custom system prompt                              |
+| `middleware`    | `AgentMiddleware[]`                            | Custom middleware                                 |
+| `backend`      | `BackendProtocol \| BackendFactory`            | Filesystem backend                                |
+| `skills`       | `string[]`                                     | Skill source paths                                |
+| `memory`       | `string[]`                                     | Memory source paths (AGENTS.md)                   |
+| `interruptOn`  | `Record<string, boolean \| InterruptOnConfig>` | Tools requiring user approval (HITL)              |
+| `commands`     | `Array<{ name, description, input? }>`         | Custom slash commands                             |
+
+
+
+## Features
+
+### Multiple agents
+
+When you define multiple agents, the client selects which one to use at session creation time by passing `configOptions.agent` in the `session/new` ACP request. If not specified, the first agent is used by default.
+
+```typescript
+const server = new DeepAgentsServer({
+  agents: [
+    { name: "code-agent", description: "General coding" },
+    { name: "reviewer", description: "Code reviews" },
+  ],
+});
+
+// Client sends session/new with configOptions to select an agent:
+// { "configOptions": { "agent": "reviewer" } }  → uses the "reviewer" agent
+// { "configOptions": { "agent": "code-agent" } } → uses the "code-agent" agent
+// { }                                            → uses the first agent ("code-agent")
+```
+
+<Note>
+    Some ACP clients (like Zed) don't currently expose a UI for passing `configOptions` at session creation. In that case, consider running separate server instances with a single agent each.
+</Note>
+
+### Slash commands
+
+The server provides built-in slash commands accessible from the IDE's prompt input. Type `/` to see available commands:
+
+| Command   | Description                                |
+| --------- | ------------------------------------------ |
+| `/plan`   | Switch to plan mode (read-only planning)   |
+| `/agent`  | Switch to agent mode (full autonomous)     |
+| `/ask`    | Switch to ask mode (Q&A, no file changes)  |
+| `/clear`  | Clear conversation context and start fresh |
+| `/status` | Show session status and loaded skills      |
+
+You can also define custom slash commands per agent:
+
+```typescript
+const server = new DeepAgentsServer({
+  agents: {
+    name: "my-agent",
+    commands: [
+      { name: "test", description: "Run the project's test suite" },
+      { name: "lint", description: "Run linter and fix issues" },
+      {
+        name: "deploy",
+        description: "Deploy to staging",
+        input: { hint: "environment (staging or production)" },
+      },
+    ],
+  },
+});
+```
+
+### Modes
+
+The server supports three operating modes, switchable via slash commands or programmatically:
+
+1. **Agent mode** (`agent`): Full autonomous agent with file access
+2. **Plan mode** (`plan`): Planning and discussion without changes
+3. **Ask mode** (`ask`): Q&A without file modifications
+
+### Thinking / reasoning messages
+
+When using models with extended thinking (e.g., Claude with `thinking: { type: "enabled" }`), the server streams reasoning tokens to the IDE as `thought_message_chunk` updates. This gives users visibility into the agent's chain-of-thought process in clients that support it.
+
+### Tool call enhancements
+
+The server provides rich tool call reporting to the IDE:
+
+- **Tool call kinds** — each tool call is categorized using [ACP-standard kinds](https://agentclientprotocol.com/protocol/tool-calls) (`read`, `edit`, `search`, `execute`, `think`, etc.) so the IDE can display appropriate icons
+- **File locations (follow-along)** — tool calls that operate on files (e.g., `read_file`, `edit_file`, `grep`) report `{ path, line }` locations, enabling IDEs to open and highlight files the agent is working with in real time
+- **Diff content** — when the agent edits a file, the tool call update includes diff content so the IDE can render inline diffs
+- **Raw input/output** — tool call notifications include the raw tool arguments and results for transparency
+
+### Human-in-the-loop (permission requests)
+
+When agents are configured with `interruptOn`, the server bridges LangGraph's interrupt system to the ACP `session/request_permission` protocol. This surfaces approval prompts in the IDE before sensitive tools execute:
+
+```typescript
+const server = new DeepAgentsServer({
+  agents: {
+    name: "careful-agent",
+    interruptOn: {
+      execute: { allowedDecisions: ["approve", "edit", "reject"] },
+      write_file: true,
+    },
+  },
+});
+```
+
+When the agent calls a protected tool, the IDE shows a permission dialog with options:
+
+- **Allow once** — approve this specific invocation
+- **Reject** — deny this specific invocation
+- **Always allow** — approve and remember for this session
+- **Always reject** — deny and remember for this session
+
+### Terminal integration
+
+When the ACP client supports the `terminal` capability (e.g., Zed, JetBrains), the server uses the client's terminal for `execute` tool calls instead of running commands locally. This provides:
+
+- **Live streaming output** — terminal output scrolls in real time inside the IDE's agent panel
+- **Process control** — the IDE can kill long-running commands
+- **Embedded display** — terminal output is embedded directly in the tool call UI
+
+If the client doesn't support terminals, commands fall back to local execution.
+
+### ACP filesystem backend
+
+When the ACP client advertises `fs.readTextFile` and `fs.writeTextFile` capabilities, the server can proxy file operations through the client instead of reading/writing directly from disk. This enables:
+
+- **Unsaved buffer access** — the agent reads the editor's current buffer, including unsaved changes
+- **IDE-tracked modifications** — file writes go through the IDE, enabling undo, change tracking, and diff highlighting
+
+Falls back to local filesystem operations for `ls`, `glob`, and `grep` which have no ACP equivalents.
+
+### Session persistence
+
+Sessions are persisted using LangGraph's checkpointer. When loading a session with `session/load`, the server replays the full conversation history back to the client, including user messages, agent responses, tool calls with results, and plan entries. This ensures the IDE shows the complete conversation when resuming a session.
+
+
+
+## Examples
+
+### With custom tools
+
+```typescript
+import { DeepAgentsServer } from "deepagents-acp";
+import { tool } from "@langchain/core/tools";
+import { z } from "zod";
+
+const searchTool = tool(
+  async ({ query }) => {
+    return `Results for: ${query}`;
+  },
+  {
+    name: "search",
+    description: "Search the codebase",
+    schema: z.object({ query: z.string() }),
+  },
+);
+
+const server = new DeepAgentsServer({
+  agents: {
+    name: "search-agent",
+    tools: [searchTool],
+  },
+});
+
+await server.start();
+```
+
+### With human-in-the-loop approval
+
+```typescript
+import { DeepAgentsServer } from "deepagents-acp";
+
+const server = new DeepAgentsServer({
+  agents: {
+    name: "safe-agent",
+    description: "Agent that asks before writing or executing",
+    interruptOn: {
+      write_file: true,
+      edit_file: true,
+      execute: {
+        allowedDecisions: ["approve", "edit", "reject"],
+      },
+    },
+  },
+});
+
+await server.start();
+```
+
+### With a custom backend
+
+```typescript
+import { DeepAgentsServer } from "deepagents-acp";
+import { CompositeBackend, FilesystemBackend, StateBackend } from "deepagents";
+
+const server = new DeepAgentsServer({
+  agents: {
+    name: "custom-agent",
+    backend: new CompositeBackend({
+      routes: [
+        {
+          prefix: "/workspace",
+          backend: new FilesystemBackend({ rootDir: "./workspace" }),
+        },
+        { prefix: "/", backend: (config) => new StateBackend(config) },
+      ],
+    }),
+  },
+});
+
+await server.start();
+```
+
+### With skills and memory
+
+```typescript
+import { startServer } from "deepagents-acp";
+
+await startServer({
+  agents: {
+    name: "project-agent",
+    description: "Agent with project-specific knowledge",
+    skills: ["./skills/", "~/.deepagents/skills/"],
+    memory: ["./.deepagents/AGENTS.md"],
+  },
+  workspaceRoot: process.cwd(),
+});
+```
+
+
+
+## ACP protocol support
+
+This package implements the following ACP methods:
+
+### Agent methods (what the server implements)
+
+| Method             | Description                                         |
+| ------------------ | --------------------------------------------------- |
+| `initialize`       | Negotiate versions and capabilities                 |
+| `authenticate`     | Handle authentication (passthrough)                 |
+| `session/new`      | Create a new conversation session                   |
+| `session/load`     | Resume an existing session with full history replay |
+| `session/prompt`   | Process user prompts and slash commands             |
+| `session/cancel`   | Cancel ongoing operations                           |
+| `session/set_mode` | Switch agent modes                                  |
+
+### Client methods (what the server calls on the client)
+
+| Method                       | Description                                    |
+| ---------------------------- | ---------------------------------------------- |
+| `session/request_permission` | Prompt user to approve/reject tool calls       |
+| `fs/read_text_file`          | Read file contents (including unsaved buffers) |
+| `fs/write_text_file`         | Write file contents through the IDE            |
+| `terminal/create`            | Start a command in the client's terminal       |
+| `terminal/output`            | Get terminal output                            |
+| `terminal/wait_for_exit`     | Wait for command completion                    |
+| `terminal/kill`              | Kill a running command                         |
+| `terminal/release`           | Release terminal resources                     |
+
+### Capabilities
+
+The server advertises these capabilities:
+
+- `loadSession`: Session persistence with history replay
+- `promptCapabilities.image`: Image content support
+- `promptCapabilities.embeddedContext`: Embedded context support
+- `sessionCapabilities.modes`: Agent mode switching
+- `sessionCapabilities.commands`: Slash command support
+
+
+
+<Info>
+    See the upstream ACP docs for protocol details and editor support:
+    - Introduction: https://agentclientprotocol.com/get-started/introduction
+    - Clients/editors: https://agentclientprotocol.com/get-started/clients
+</Info>
+
+---
+
+<div className="source-links">
+<Callout icon="edit">
+    [Edit this page on GitHub](https://github.com/langchain-ai/docs/edit/main/src/oss/deepagents/acp.mdx) or [file an issue](https://github.com/langchain-ai/docs/issues/new/choose).
+</Callout>
+<Callout icon="terminal-2">
+    [Connect these docs](/use-these-docs) to Claude, VSCode, and more via MCP for real-time answers.
+</Callout>
+</div>
