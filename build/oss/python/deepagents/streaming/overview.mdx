@@ -3,14 +3,14 @@ title: Overview
 description: Stream real-time updates from deep agent runs and subagent execution
 ---
 
-Deep agents build on LangGraph's streaming infrastructure with first-class support for subagent streams. When a deep agent delegates work to subagents, you can stream updates from each subagent independently — tracking progress, LLM tokens, and tool calls in real time.
+Deep agents build on LangGraph's streaming infrastructure with first-class support for subagent streams. When a deep agent delegates work to subagents, you can stream updates from each subagent independently—tracking progress, LLM tokens, and tool calls in real time.
 
 What's possible with deep agent streaming:
 
-* <Icon icon="diagram-subtask" size={16} /> [**Stream subagent progress**](#subagent-progress) — track each subagent's execution as it runs in parallel.
-* <Icon icon="square-binary" size={16} /> [**Stream LLM tokens**](#llm-tokens) — stream tokens from the main agent and each subagent.
-* <Icon icon="screwdriver-wrench" size={16} /> [**Stream tool calls**](#tool-calls) — see tool calls and results from within subagent execution.
-* <Icon icon="table" size={16} /> [**Stream custom updates**](#custom-updates) — emit user-defined signals from inside subagent nodes.
+* <Icon icon="diagram-subtask" size={16} /> [**Stream subagent progress**](#subagent-progress)—track each subagent's execution as it runs in parallel.
+* <Icon icon="square-binary" size={16} /> [**Stream LLM tokens**](#llm-tokens)—stream tokens from the main agent and each subagent.
+* <Icon icon="screwdriver-wrench" size={16} /> [**Stream tool calls**](#tool-calls)—see tool calls and results from within subagent execution.
+* <Icon icon="table" size={16} /> [**Stream custom updates**](#custom-updates)—emit user-defined signals from inside subagent nodes.
 
 ## Enable subgraph streaming
 
@@ -36,7 +36,7 @@ for namespace, chunk in agent.stream(
     subgraphs=True,  # [!code highlight]
 ):
     if namespace:
-        # Subagent event — namespace identifies the source
+        # Subagent event - namespace identifies the source
         print(f"[subagent: {namespace}]")
     else:
         # Main agent event
@@ -204,7 +204,7 @@ for namespace, chunk in agent.stream(
         for tc in token.tool_call_chunks:
             if tc.get("name"):
                 print(f"\n[{source}] Tool call: {tc['name']}")
-            # Args stream in chunks — write them incrementally
+            # Args stream in chunks - write them incrementally
             if tc.get("args"):
                 print(tc["args"], end="", flush=True)
 
@@ -305,7 +305,7 @@ for namespace, chunk in agent.stream(
 Combine multiple stream modes to get a complete picture of agent execution:
 
 ```python
-# Skip internal middleware steps — only show meaningful node names
+# Skip internal middleware steps - only show meaningful node names
 INTERESTING_NODES = {"model_request", "tools"}
 
 last_source = ""
@@ -430,9 +430,9 @@ for sub_id, sub in active_subagents.items():
 
 ## Related
 
-- [Subagents](/oss/python/deepagents/subagents) — Configure and use subagents with deep agents
-- [Frontend streaming](/oss/python/deepagents/streaming/frontend) — Build React UIs with `useStream` for deep agents
-- [LangChain streaming overview](/oss/python/langchain/streaming/overview) — General streaming concepts with LangChain agents
+- [Subagents](/oss/python/deepagents/subagents)—Configure and use subagents with deep agents
+- [Frontend streaming](/oss/python/deepagents/streaming/frontend)—Build React UIs with `useStream` for deep agents
+- [LangChain streaming overview](/oss/python/langchain/streaming/overview)—General streaming concepts with LangChain agents
 
 ---
 

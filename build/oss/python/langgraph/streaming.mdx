@@ -8,12 +8,12 @@ LangGraph implements a streaming system to surface real-time updates. Streaming 
 
 What's possible with LangGraph streaming:
 
-* <Icon icon="share" size={16} /> [**Stream graph state**](#stream-graph-state) — get state updates / values with `updates` and `values` modes.
-* <Icon icon="chart-bar" size={16} /> [**Stream subgraph outputs**](#stream-subgraph-outputs) — include outputs from both the parent graph and any nested subgraphs.
-* <Icon icon="binary" size={16} /> [**Stream LLM tokens**](#messages) — capture token streams from anywhere: inside nodes, subgraphs, or tools.
-* <Icon icon="table" size={16} /> [**Stream custom data**](#stream-custom-data) — send custom updates or progress signals directly from tool functions.
+* <Icon icon="share" size={16} /> [**Stream graph state**](#stream-graph-state)—get state updates / values with `updates` and `values` modes.
+* <Icon icon="chart-bar" size={16} /> [**Stream subgraph outputs**](#stream-subgraph-outputs)—include outputs from both the parent graph and any nested subgraphs.
+* <Icon icon="binary" size={16} /> [**Stream LLM tokens**](#messages)—capture token streams from anywhere: inside nodes, subgraphs, or tools.
+* <Icon icon="table" size={16} /> [**Stream custom data**](#stream-custom-data)—send custom updates or progress signals directly from tool functions.
 
-* <Icon icon="stack-push" size={16} /> [**Use multiple streaming modes**](#stream-multiple-modes) — choose from `values` (full state), `updates` (state deltas), `messages` (LLM tokens + metadata), `custom` (arbitrary user data), or `debug` (detailed traces).
+* <Icon icon="stack-push" size={16} /> [**Use multiple streaming modes**](#stream-multiple-modes)—choose from `values` (full state), `updates` (state deltas), `messages` (LLM tokens + metadata), `custom` (arbitrary user data), or `debug` (detailed traces).
 
 
 ## Supported stream modes
@@ -581,7 +581,7 @@ See [Async with Python < 3.11](#async) for usage examples.
 
 ## Use with any LLM
 
-You can use `stream_mode="custom"` to stream data from **any LLM API** — even if that API does **not** implement the LangChain chat model interface.
+You can use `stream_mode="custom"` to stream data from **any LLM API**—even if that API does **not** implement the LangChain chat model interface.
 
 This lets you integrate raw LLM clients or external services that provide their own streaming interfaces, making LangGraph highly flexible for custom setups.
 
@@ -786,7 +786,7 @@ In Python versions < 3.11, [asyncio tasks](https://docs.python.org/3/library/asy
 This limits LangGraph ability to automatically propagate context, and affects LangGraph's streaming mechanisms in two key ways:
 
 1. You **must** explicitly pass [`RunnableConfig`](https://python.langchain.com/docs/concepts/runnables/#runnableconfig) into async LLM calls (e.g., `ainvoke()`), as callbacks are not automatically propagated.
-2. You **cannot** use [`get_stream_writer`](https://reference.langchain.com/python/langgraph/config/get_stream_writer) in async nodes or tools — you must pass a `writer` argument directly.
+2. You **cannot** use [`get_stream_writer`](https://reference.langchain.com/python/langgraph/config/get_stream_writer) in async nodes or tools—you must pass a `writer` argument directly.
 
 <Accordion title="Extended example: async LLM call with manual config">
   ```python

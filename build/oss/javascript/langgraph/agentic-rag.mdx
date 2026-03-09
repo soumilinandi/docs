@@ -188,7 +188,7 @@ Now we will start building components ([nodes](/oss/javascript/langgraph/graph-a
 
 
 
-1. Add a node — `gradeDocuments` — to determine whether the retrieved documents are relevant to the question. We will use a model with structured output using Zod for document grading. We'll also add a [conditional edge](/oss/javascript/langgraph/graph-api#conditional-edges) — `checkRelevance` — that checks the grading result and returns the name of the node to go to (`generate` or `rewrite`):
+1. Add a node—`gradeDocuments`—to determine whether the retrieved documents are relevant to the question. We will use a model with structured output using Zod for document grading. We'll also add a [conditional edge](/oss/javascript/langgraph/graph-api#conditional-edges)—`checkRelevance`—that checks the grading result and returns the name of the node to go to (`generate` or `rewrite`):
   ```typescript
   import * as z from "zod";
   import { ChatPromptTemplate } from "@langchain/core/prompts";
