@@ -378,11 +378,11 @@ await server.start();
 
 :::js
 
-## Features
+## Customization
 
 ### Multiple agents
 
-When you define multiple agents, the client selects which one to use at session creation time by passing `configOptions.agent` in the `session/new` ACP request. If not specified, the client uses the first agent by default.
+You can expose multiple agents from a single server. The ACP client selects which agent to use when creating a session:
 
 ```typescript
 const server = new DeepAgentsServer({
@@ -391,30 +391,15 @@ const server = new DeepAgentsServer({
     { name: "reviewer", description: "Code reviews" },
   ],
 });
-
-// Client sends session/new with configOptions to select an agent:
-// { "configOptions": { "agent": "reviewer" } }  → uses the "reviewer" agent
-// { "configOptions": { "agent": "code-agent" } } → uses the "code-agent" agent
-// { }                                            → uses the first agent ("code-agent")
 ```
 
 <Note>
-    Some ACP clients (like Zed) don't currently expose a UI for passing `configOptions` at session creation. In that case, consider running separate server instances with a single agent each.
+    Some ACP clients (like Zed) don't currently expose a UI for selecting between agents. In that case, consider running separate server instances with a single agent each.
 </Note>
 
 ### Slash commands
 
-The server provides built-in slash commands accessible from the IDE's prompt input. Type `/` to see available commands:
-
-| Command   | Description                                |
-| --------- | ------------------------------------------ |
-| `/plan`   | Switch to plan mode (read-only planning)   |
-| `/agent`  | Switch to agent mode (full autonomous)     |
-| `/ask`    | Switch to ask mode (Q&A, no file changes)  |
-| `/clear`  | Clear conversation context and start fresh |
-| `/status` | Show session status and loaded skills      |
-
-You can also define custom slash commands per agent:
+The server registers built-in slash commands with the IDE: `/plan`, `/agent`, `/ask`, `/clear`, and `/status`. You can also define custom commands per agent:
 
 ```typescript
 const server = new DeepAgentsServer({
@@ -433,30 +418,9 @@ const server = new DeepAgentsServer({
 });
 ```
 
-### Modes
+### Human-in-the-loop
 
-The server supports three operating modes, switchable via slash commands or programmatically:
-
-1. **Agent mode** (`agent`): Full autonomous agent with file access
-2. **Plan mode** (`plan`): Planning and discussion without changes
-3. **Ask mode** (`ask`): Q&A without file modifications
-
-### Thinking / reasoning messages
-
-When using models with extended thinking (e.g., Claude with `thinking: { type: "enabled" }`), the server streams reasoning tokens to the IDE as `thought_message_chunk` updates. This gives users visibility into the agent's chain-of-thought process in clients that support it.
-
-### Tool call enhancements
-
-The server provides rich tool call reporting to the IDE:
-
-- **Tool call kinds** — each tool call is categorized using [ACP-standard kinds](https://agentclientprotocol.com/protocol/tool-calls) (`read`, `edit`, `search`, `execute`, `think`, etc.) so the IDE can display appropriate icons
-- **File locations (follow-along)** — tool calls that operate on files (e.g., `read_file`, `edit_file`, `grep`) report `{ path, line }` locations, enabling IDEs to open and highlight files the agent is working with in real time
-- **Diff content** — when the agent edits a file, the tool call update includes diff content so the IDE can render inline diffs
-- **Raw input/output** — tool call notifications include the raw tool arguments and results for transparency
-
-### Human-in-the-loop (permission requests)
-
-When agents are configured with `interruptOn`, the server bridges LangGraph's interrupt system to the ACP `session/request_permission` protocol. This surfaces approval prompts in the IDE before sensitive tools execute:
+Use `interruptOn` to require user approval in the IDE before the agent runs sensitive tools:
 
 ```typescript
 const server = new DeepAgentsServer({
@@ -470,43 +434,9 @@ const server = new DeepAgentsServer({
 });
 ```
 
-When the agent calls a protected tool, the IDE shows a permission dialog with options:
+When the agent calls a protected tool, the IDE prompts the user to allow or reject the operation, with options to remember the decision for the session.
 
-- **Allow once** — approve this specific invocation
-- **Reject** — deny this specific invocation
-- **Always allow** — approve and remember for this session
-- **Always reject** — deny and remember for this session
-
-### Terminal integration
-
-When the ACP client supports the `terminal` capability (e.g., Zed, JetBrains), the server uses the client's terminal for `execute` tool calls instead of running commands locally. This provides:
-
-- **Live streaming output** — terminal output scrolls in real time inside the IDE's agent panel
-- **Process control** — the IDE can kill long-running commands
-- **Embedded display** — terminal output is embedded directly in the tool call UI
-
-If the client doesn't support terminals, commands fall back to local execution.
-
-### ACP filesystem backend
-
-When the ACP client advertises `fs.readTextFile` and `fs.writeTextFile` capabilities, the server can proxy file operations through the client instead of reading/writing directly from disk. This enables:
-
-- **Unsaved buffer access** — the agent reads the editor's current buffer, including unsaved changes
-- **IDE-tracked modifications** — file writes go through the IDE, enabling undo, change tracking, and diff highlighting
-
-Falls back to local filesystem operations for `ls`, `glob`, and `grep` which have no ACP equivalents.
-
-### Session persistence
-
-Sessions are persisted using LangGraph's checkpointer. When loading a session with `session/load`, the server replays the full conversation history back to the client, including user messages, agent responses, tool calls with results, and plan entries. This ensures the IDE shows the complete conversation when resuming a session.
-
-:::
-
-:::js
-
-## Examples
-
-### With custom tools
+### Custom tools
 
 ```typescript
 import { DeepAgentsServer } from "deepagents-acp";
@@ -534,29 +464,7 @@ const server = new DeepAgentsServer({
 await server.start();
 ```
 
-### With human-in-the-loop approval
-
-```typescript
-import { DeepAgentsServer } from "deepagents-acp";
-
-const server = new DeepAgentsServer({
-  agents: {
-    name: "safe-agent",
-    description: "Agent that asks before writing or executing",
-    interruptOn: {
-      write_file: true,
-      edit_file: true,
-      execute: {
-        allowedDecisions: ["approve", "edit", "reject"],
-      },
-    },
-  },
-});
-
-await server.start();
-```
-
-### With a custom backend
+### Custom backend
 
 ```typescript
 import { DeepAgentsServer } from "deepagents-acp";
@@ -580,7 +488,7 @@ const server = new DeepAgentsServer({
 await server.start();
 ```
 
-### With skills and memory
+### Skills and memory
 
 ```typescript
 import { startServer } from "deepagents-acp";
@@ -595,49 +503,6 @@ await startServer({
   workspaceRoot: process.cwd(),
 });
 ```
-
-:::
-
-:::js
-
-## ACP protocol support
-
-This package implements the following ACP methods:
-
-### Agent methods (what the server implements)
-
-| Method             | Description                                         |
-| ------------------ | --------------------------------------------------- |
-| `initialize`       | Negotiate versions and capabilities                 |
-| `authenticate`     | Handle authentication (passthrough)                 |
-| `session/new`      | Create a new conversation session                   |
-| `session/load`     | Resume an existing session with full history replay |
-| `session/prompt`   | Process user prompts and slash commands             |
-| `session/cancel`   | Cancel ongoing operations                           |
-| `session/set_mode` | Switch agent modes                                  |
-
-### Client methods (what the server calls on the client)
-
-| Method                       | Description                                    |
-| ---------------------------- | ---------------------------------------------- |
-| `session/request_permission` | Prompt user to approve/reject tool calls       |
-| `fs/read_text_file`          | Read file contents (including unsaved buffers) |
-| `fs/write_text_file`         | Write file contents through the IDE            |
-| `terminal/create`            | Start a command in the client's terminal       |
-| `terminal/output`            | Get terminal output                            |
-| `terminal/wait_for_exit`     | Wait for command completion                    |
-| `terminal/kill`              | Kill a running command                         |
-| `terminal/release`           | Release terminal resources                     |
-
-### Capabilities
-
-The server advertises these capabilities:
-
-- `loadSession`: Session persistence with history replay
-- `promptCapabilities.image`: Image content support
-- `promptCapabilities.embeddedContext`: Embedded context support
-- `sessionCapabilities.modes`: Agent mode switching
-- `sessionCapabilities.commands`: Slash command support
 
 :::
 
