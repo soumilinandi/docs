@@ -1,7 +1,7 @@
 """Example of using nostream tag to exclude LLM output from the stream."""
 
 # :snippet-start: nostream-tag-py
-from typing import Any, TypedDict, cast
+from typing import Any, TypedDict
 
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import BaseMessage
@@ -57,7 +57,7 @@ initial_state: State = {
     "public_response": "",
     "internal_analysis": "",
 }
-stream = graph.stream(cast("Any", initial_state), stream_mode="messages")
+stream = graph.stream(initial_state, stream_mode="messages")  # type: ignore[arg-type]
 
 # :remove-start:
 # Stream with "messages" mode - only tokens from streaming_model will appear
