@@ -156,21 +156,22 @@ These can be used directly using the `Makefile` or via the `docs` CLI tool:
 
 After running `make install`, you can use `make lint_prose` to ensure your writing meets our style guide rules.
 
-You can also follow these steps to enable `vale` with VS code or Cursor:
+You can also follow these steps to enable `vale` with VS Code or Cursor:
 
-1. Install the [vale extension](https://marketplace.visualstudio.com/items?itemName=errata-ai.vale-server)
-1. Navigate to the vale extension settings:
-   - Specify the absolute path to the `.vale.ini` file for `Vale CLI: Config`. The file is in the root of the repo.
-   - Set the min alert level to `suggestion` - a lot of the rules are coded as suggestions.
-   - Specify the path to your vale installation. To find this path run `where vale` in your terminal and copy the path. This path can't include any spaces before or after the path.
+1. Install the [Vale extension](https://marketplace.visualstudio.com/items?itemName=chrischinchilla.vale-vscode) (Vale by Chris Chinchilla)
+2. Install Vale CLI: `brew install vale` (macOS) or see [Vale installation](https://vale.sh/docs/vale-cli/installation/) for other platforms
+3. Navigate to the Vale extension settings:
+   - Set `Vale CLI: Config` to the absolute path to `.vale.ini` (in the root of this repo)
+   - Set `Vale CLI: Min Alert Level` to `suggestion` (many rules are coded as suggestions)
 
-If you cannot use the VSCode UI to configure vale you will need to add these settings to your `settings.json`:
+If you cannot use the VS Code UI to configure Vale, add these settings to your `settings.json`:
 
 ```json
-    "vale.valeCLI.config": "/path/to/your/.vale.ini",
-    "vale.valeCLI.minAlertLevel": "suggestion",
-    "vale.valeCLI.path": "/usr/local/bin/vale",
+    "vale.valeCLI.config": "/path/to/docs/.vale.ini",
+    "vale.valeCLI.minAlertLevel": "suggestion"
 ```
+
+**Note:** The extension requires Vale on your `PATH`. If annotations don't appear (e.g., when Cursor is launched from the Dock), launch Cursor from a terminal so it inherits your PATH, or ensure Homebrew is in your shell profile.
 
 ## Troubleshooting
 

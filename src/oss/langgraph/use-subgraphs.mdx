@@ -3,8 +3,6 @@ title: Subgraphs
 sidebarTitle: Subgraphs
 ---
 
-
-
 This guide explains the mechanics of using subgraphs. A subgraph is a [graph](/oss/langgraph/graph-api#graphs) that is used as a [node](/oss/langgraph/graph-api#nodes) in another graph.
 
 Subgraphs are useful for:
@@ -642,7 +640,7 @@ def veggie_info(veggie_name: str) -> str:
     """Look up veggie info."""
     return f"Info about {veggie_name}"
 
-# Subagents—no checkpointer setting (inherits parent)
+# Subagents - no checkpointer setting (inherits parent)
 fruit_agent = create_agent(
     model="gpt-4.1-mini",
     tools=[fruit_info],
@@ -699,14 +697,14 @@ agent = create_agent(
   ```python
   config = {"configurable": {"thread_id": "1"}}
 
-  # Invoke—the subagent's tool calls interrupt()
+  # Invoke - the subagent's tool calls interrupt()
   response = agent.invoke(
       {"messages": [{"role": "user", "content": "Tell me about apples"}]},
       config=config,
   )
   # response contains __interrupt__
 
-  # Resume—approve the interrupt
+  # Resume - approve the interrupt
   response = agent.invoke(Command(resume=True), config=config)  # [!code highlight]
   # Subagent message count: 4
   ```
@@ -724,7 +722,7 @@ agent = create_agent(
   )
   # Subagent message count: 4
 
-  # Second call—subagent starts fresh, no memory of apples
+  # Second call - subagent starts fresh, no memory of apples
   response = agent.invoke(
       {"messages": [{"role": "user", "content": "Now tell me about bananas"}]},
       config=config,
@@ -743,8 +741,8 @@ agent = create_agent(
       {"messages": [{"role": "user", "content": "Tell me about apples and bananas"}]},
       config=config,
   )
-  # Subagent message count: 4 (apples—fresh)
-  # Subagent message count: 4 (bananas—fresh)
+  # Subagent message count: 4 (apples - fresh)
+  # Subagent message count: 4 (bananas - fresh)
   ```
   </Tab>
 </Tabs>
@@ -775,7 +773,7 @@ const veggieInfo = tool(
   }
 );
 
-// Subagents—no checkpointer setting (inherits parent)
+// Subagents - no checkpointer setting (inherits parent)
 const fruitAgent = createAgent({
   model: "gpt-4.1-mini",
   tools: [fruitInfo],
@@ -849,14 +847,14 @@ const agent = createAgent({
   ```typescript
   const config = { configurable: { thread_id: "1" } };
 
-  // Invoke—the subagent's tool calls interrupt()
+  // Invoke - the subagent's tool calls interrupt()
   let response = await agent.invoke(
     { messages: [{ role: "user", content: "Tell me about apples" }] },
     config,
   );
   // response contains __interrupt__
 
-  // Resume—approve the interrupt
+  // Resume - approve the interrupt
   response = await agent.invoke(new Command({ resume: true }), config);  // [!code highlight]
   // Subagent message count: 4
   ```
@@ -874,7 +872,7 @@ const agent = createAgent({
   );
   // Subagent message count: 4
 
-  // Second call—subagent starts fresh, no memory of apples
+  // Second call - subagent starts fresh, no memory of apples
   response = await agent.invoke(
     { messages: [{ role: "user", content: "Now tell me about bananas" }] },
     config,
@@ -893,8 +891,8 @@ const agent = createAgent({
     { messages: [{ role: "user", content: "Tell me about apples and bananas" }] },
     config,
   );
-  // Subagent message count: 4 (apples—fresh)
-  // Subagent message count: 4 (bananas—fresh)
+  // Subagent message count: 4 (apples - fresh)
+  // Subagent message count: 4 (bananas - fresh)
   ```
   </Tab>
 </Tabs>
@@ -996,14 +994,14 @@ agent = create_agent(
   ```python
   config = {"configurable": {"thread_id": "1"}}
 
-  # Invoke—the subagent's tool calls interrupt()
+  # Invoke - the subagent's tool calls interrupt()
   response = agent.invoke(
       {"messages": [{"role": "user", "content": "Tell me about apples"}]},
       config=config,
   )
   # response contains __interrupt__
 
-  # Resume—approve the interrupt
+  # Resume - approve the interrupt
   response = agent.invoke(Command(resume=True), config=config)  # [!code highlight]
   # Subagent message count: 4
   ```
@@ -1021,7 +1019,7 @@ agent = create_agent(
   )
   # Subagent message count: 4
 
-  # Second call—subagent REMEMBERS apples conversation
+  # Second call - subagent REMEMBERS apples conversation
   response = agent.invoke(
       {"messages": [{"role": "user", "content": "Now tell me about bananas"}]},
       config=config,
@@ -1059,7 +1057,7 @@ agent = create_agent(
 
   config = {"configurable": {"thread_id": "1"}}
 
-  # First call—LLM calls both fruit and veggie experts
+  # First call - LLM calls both fruit and veggie experts
   response = agent.invoke(
       {"messages": [{"role": "user", "content": "Tell me about cherries and broccoli"}]},
       config=config,
@@ -1067,7 +1065,7 @@ agent = create_agent(
   # Fruit subagent message count: 4
   # Veggie subagent message count: 4
 
-  # Second call—both agents accumulate independently
+  # Second call - both agents accumulate independently
   response = agent.invoke(
       {"messages": [{"role": "user", "content": "Now tell me about oranges and carrots"}]},
       config=config,
@@ -1155,14 +1153,14 @@ const agent = createAgent({
   ```typescript
   const config = { configurable: { thread_id: "1" } };
 
-  // Invoke—the subagent's tool calls interrupt()
+  // Invoke - the subagent's tool calls interrupt()
   let response = await agent.invoke(
     { messages: [{ role: "user", content: "Tell me about apples" }] },
     config,
   );
   // response contains __interrupt__
 
-  // Resume—approve the interrupt
+  // Resume - approve the interrupt
   response = await agent.invoke(new Command({ resume: true }), config);  // [!code highlight]
   // Subagent message count: 4
   ```
@@ -1180,7 +1178,7 @@ const agent = createAgent({
   );
   // Subagent message count: 4
 
-  // Second call—subagent REMEMBERS apples conversation
+  // Second call - subagent REMEMBERS apples conversation
   response = await agent.invoke(
     { messages: [{ role: "user", content: "Now tell me about bananas" }] },
     config,
@@ -1213,7 +1211,7 @@ const agent = createAgent({
   });
   const config = { configurable: { thread_id: "1" } };
 
-  // First call—LLM calls both fruit and veggie experts
+  // First call - LLM calls both fruit and veggie experts
   let response = await agent.invoke(
     { messages: [{ role: "user", content: "Tell me about cherries and broccoli" }] },
     config,
@@ -1221,7 +1219,7 @@ const agent = createAgent({
   // Fruit subagent message count: 4
   // Veggie subagent message count: 4
 
-  // Second call—both agents accumulate independently
+  // Second call - both agents accumulate independently
   response = await agent.invoke(
     { messages: [{ role: "user", content: "Now tell me about oranges and carrots" }] },
     config,
