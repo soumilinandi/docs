@@ -857,7 +857,7 @@ The weather in San Francisco is sunny and 72°F
 <Accordion title="Client-executed tool search">
 For full control of the underlying tool search process, you can specify `"execution": "client"` in the search tool definition. If the model elects to search for a tool, it will include a `tool_search_call` block in its response. You can then supply a `tool_search_output` block that includes the tool definition.
 
-Below, we show how this can be orchestrated using [custom middleware](/oss/langchain/middleware/custom). We first implement a callable defining our search logic. The middleware then includes:
+The following example shows how you can orchestrate this using [custom middleware](/oss/langchain/middleware/custom). The example implements a callable defining the search logic. The middleware then includes:
 1. An `after_model` hook to check for `tool_search_call` blocks and invoke our callable
 2. A `wrap_tool_call` hook for [runtime tool registration](/oss/langchain/agents#runtime-tool-registration)
 
