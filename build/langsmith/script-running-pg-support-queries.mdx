@@ -1,0 +1,127 @@
+---
+title: Run support queries against PostgreSQL
+sidebarTitle: Run support queries against PostgreSQL
+---
+
+This Helm repository contains queries to produce output that the LangSmith UI does not currently support directly (e.g. obtaining trace counts for multiple organizations in a single query).
+
+This command takes a postgres connection string that contains an embedded name and password (which can be passed in from a call to a secrets manager) and executes a query from an input file. In the example below, we are using the `pg_get_trace_counts_daily.sql` input file in the `support_queries/postgres` directory.
+
+## Prerequisites
+
+Ensure you have the following tools/items ready.
+
+1. kubectl
+
+   * [https://kubernetes.io/docs/tasks/tools/](https://kubernetes.io/docs/tasks/tools/)
+
+2. PostgreSQL client
+
+   * [https://www.postgresql.org/download/](https://www.postgresql.org/download/)
+
+3. PostgreSQL database connection:
+
+   * Host
+   * Port
+   * Username
+     * If using the bundled version, this is `postgres`
+   * Password
+     * If using the bundled version, this is `postgres`
+   * Database name
+     * If using the bundled version, this is `postgres`
+
+4. Connectivity to the PostgreSQL database from the machine you will be running the migration script on.
+
+   * If you are using the bundled version, you may need to port forward the postgresql service to your local machine.
+   * Run `kubectl port-forward svc/langsmith-postgres 5432:5432` to port forward the postgresql service to your local machine.
+
+5. The script to run a support query
+
+   * You can download the script from [here](https://github.com/langchain-ai/helm/blob/main/charts/langsmith/scripts/run_support_query_pg.sh)
+
+## Running the query script
+
+Run the following command to run the desired query:
+
+```bash
+sh run_support_query_pg.sh <postgres_url> --input path/to/query.sql
+```
+
+For example, if you are using the bundled version with port-forwarding, the command might look like:
+
+```bash
+sh run_support_query_pg.sh "postgres://postgres:postgres@localhost:5432/postgres" --input support_queries/pg_get_trace_counts_daily.sql
+```
+
+which will output the count of daily traces by workspace ID and organization ID. To extract this to a file add the flag `--output path/to/file.csv`
+
+## Export usage data
+
+### Export from the UI
+
+<Note>
+The UI export requires Helm chart version 0.13.20 or later and the `organization:manage` permission.
+</Note>
+
+The simplest way to export usage data is from the LangSmith Settings UI:
+
+1. Navigate to **Settings** > **Usage and billing** > **Usage backfill**.
+2. Click **Export CSV**.
+3. A ZIP file will download containing one or more CSV files with all of your trace usage data.
+
+The export includes all trace count transactions across all workspaces and organizations. It automatically populates customer information from your license key and assigns a backfill ID and timestamp to each row for tracking. If the export contains more than 10,000 rows, it is split into multiple CSV files within the ZIP.
+
+<Note>
+The **Usage backfill** tab is only visible to users with the `organization:manage` permission whose email is in the `USAGE_EXPORT_ADMIN_EMAILS` list (or when `ORG_ADMINS_INSTALLATION_USAGE_EXPORT_ENABLED` is set to `true`).
+</Note>
+
+### Export via API
+
+If you prefer to export usage data programmatically (for example, to automate the process), you can call the export API endpoint directly. This produces the same output as the UI export.
+
+<Note>
+The API export requires Helm chart version 0.13.20 or later and the `organization:manage` permission.
+</Note>
+
+```bash
+curl -o backfill-export.zip \
+  -H "X-API-Key: <your_api_key>" \
+  https://<langsmith_url>/api/v1/orgs/current/usage/backfill-export
+```
+
+The response is a ZIP file containing one or more CSV files with all trace usage data.
+
+### Export via SQL scripts
+
+The UI and API methods above export trace usage only. To export node usage, or if you are running a Helm chart version older than 0.13.20, use the SQL-based export scripts below.
+
+<Note>
+Exporting usage data via SQL requires running Helm chart version 0.11.4 or later.
+</Note>
+
+To export trace usage:
+
+```bash
+sh run_support_query_pg.sh <postgres_url> \
+  --input support_queries/postgres/pg_usage_traces_full_export.sql \
+  --output ls_export.csv
+```
+
+To export node usage:
+
+```bash
+sh run_support_query_pg.sh <postgres_url> \
+  --input support_queries/postgres/pg_usage_nodes_full_export.sql \
+  --output lgp_export.csv
+```
+
+---
+
+<div className="source-links">
+<Callout icon="edit">
+    [Edit this page on GitHub](https://github.com/langchain-ai/docs/edit/main/src/langsmith/script-running-pg-support-queries.mdx) or [file an issue](https://github.com/langchain-ai/docs/issues/new/choose).
+</Callout>
+<Callout icon="terminal-2">
+    [Connect these docs](/use-these-docs) to Claude, VSCode, and more via MCP for real-time answers.
+</Callout>
+</div>
