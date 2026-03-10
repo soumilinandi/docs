@@ -1,10 +1,14 @@
 ---
 title: "GoogleGenerativeAIEmbeddings integration"
 sidebarTitle: "Embeddings"
-description: "Integrate with the GoogleGenerativeAIEmbeddings embedding model using LangChain JavaScript."
+description: "Integrate with the GoogleGenerativeAIEmbeddings embedding model using LangChain JavaScript. Supports multimodal embeddings with Gemini Embedding 2."
 ---
 
 This will help you get started with Google Generative AI [embedding models](/oss/integrations/text_embedding) using LangChain. For detailed documentation on `GoogleGenerativeAIEmbeddings` features and configuration options, please refer to the [API reference](https://api.js.langchain.com/classes/langchain_google_genai.GoogleGenerativeAIEmbeddings.html).
+
+<Note>
+**Gemini Embedding 2** (`gemini-embedding-2-preview`) is Google's latest embedding model, built on the Gemini multimodal architecture. It supports 100+ languages, flexible output dimensions (128–3072), and ranks in the top 5 on the MTEB Multilingual leaderboard.
+</Note>
 
 ## Overview
 
@@ -60,7 +64,7 @@ import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
 import { TaskType } from "@google/generative-ai";
 
 const embeddings = new GoogleGenerativeAIEmbeddings({
-  model: "gemini-embedding-001", // 768 dimensions
+  model: "gemini-embedding-2-preview", // 3072 dimensions (default), supports 128-3072
   taskType: TaskType.RETRIEVAL_DOCUMENT,
   title: "Document title",
 });

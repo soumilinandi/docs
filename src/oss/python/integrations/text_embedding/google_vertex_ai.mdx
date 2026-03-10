@@ -6,7 +6,7 @@ description: "Integrate with the Google Vertex AI embedding model using LangChai
 <Danger>
     **Deprecated**
 
-    This integration is deprecated and will be removed in a future release. Please use [`GoogleGenerativeAIEmbeddings`](/oss/integrations/text_embedding/google_generative_ai) instead. See the full [release notes and migration guide](https://github.com/langchain-ai/langchain-google/discussions/1422).
+    This integration is deprecated and will be removed in a future release. Please use [`GoogleGenerativeAIEmbeddings`](/oss/integrations/text_embedding/google_generative_ai) instead, which supports the latest `gemini-embedding-2-preview` model with multimodal embeddings (text, image, audio, video, PDF). See the full [release notes and migration guide](https://github.com/langchain-ai/langchain-google/discussions/1422).
 </Danger>
 
 This will help you get started with Google Vertex AI Embeddings models using LangChain. For detailed documentation on `Google Vertex AI Embeddings` features and configuration options, please refer to the [API reference](https://python.langchain.com/api_reference/google_vertexai/embeddings/langchain_google_vertexai.embeddings.VertexAIEmbeddings.html).
@@ -87,7 +87,7 @@ Now we can instantiate our model object and generate embeddings:
 from langchain_google_vertexai import VertexAIEmbeddings
 
 # Initialize the a specific Embeddings Model version
-embeddings = VertexAIEmbeddings(model_name="gemini-embedding-001")
+embeddings = VertexAIEmbeddings(model_name="gemini-embedding-2-preview")
 ```
 
 ## Indexing and retrieval

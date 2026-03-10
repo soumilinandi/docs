@@ -8,6 +8,10 @@ Connect to Google's generative AI embeddings service using the `GoogleGenerative
 
 This will help you get started with Google's Generative AI embedding models (like Gemini) using LangChain. For detailed documentation on `GoogleGenerativeAIEmbeddings` features and configuration options, please refer to the [API reference](https://python.langchain.com/v0.2/api_reference/google_genai/embeddings/langchain_google_genai.embeddings.GoogleGenerativeAIEmbeddings.html).
 
+<Note>
+**Gemini Embedding 2** (`gemini-embedding-2-preview`) is Google's latest embedding model, built on the Gemini multimodal architecture. It supports 100+ languages, flexible output dimensions (128–3072), and ranks in the top 5 on the MTEB Multilingual leaderboard.
+</Note>
+
 ## Overview
 
 ### Integration details
@@ -50,7 +54,7 @@ pip install -qU  langchain-google-genai
 ```python
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
-embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
+embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-2-preview")
 vector = embeddings.embed_query("hello, world!")
 vector[:5]
 ```
@@ -134,10 +138,10 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from sklearn.metrics.pairwise import cosine_similarity
 
 query_embeddings = GoogleGenerativeAIEmbeddings(
-    model="models/gemini-embedding-001", task_type="RETRIEVAL_QUERY"
+    model="models/gemini-embedding-2-preview", task_type="RETRIEVAL_QUERY"
 )
 doc_embeddings = GoogleGenerativeAIEmbeddings(
-    model="models/gemini-embedding-001", task_type="RETRIEVAL_DOCUMENT"
+    model="models/gemini-embedding-2-preview", task_type="RETRIEVAL_DOCUMENT"
 )
 
 q_embed = query_embeddings.embed_query("What is the capital of France?")
