@@ -1,0 +1,489 @@
+---
+title: Trace an LLM application tutorial
+sidebarTitle: Trace an LLM application
+description: Add LangSmith observability to an LLM application across prototyping, beta testing, and production.
+icon: "school"
+---
+
+import project from '/snippets/langsmith/trace-ingestion-project.mdx';
+
+In this tutorial, you will build a customer support chatbot using retrieval-augmented generation (RAG) and add LangSmith observability at each stage of development — from early prototyping through production.
+
+By the end, you will know how to:
+
+- Trace individual LLM calls and full application pipelines.
+- Collect and query user feedback.
+- Log metadata and use it for filtering and A/B testing.
+- Use monitoring dashboards to track production performance.
+
+## Prerequisites
+
+Before you begin, make sure you have:
+
+- **A LangSmith account**: Sign up or log in at [smith.langchain.com](https://smith.langchain.com).
+- **A LangSmith API key**: Follow the [Create an API key](/langsmith/create-account-api-key#create-an-api-key) guide.
+- **An OpenAI API key**: Generate this from the [OpenAI dashboard](https://platform.openai.com/account/api-keys).
+
+Install the required packages:
+
+<CodeGroup>
+
+```bash Python
+pip install langsmith openai
+```
+
+```bash TypeScript
+npm install langsmith openai
+```
+
+</CodeGroup>
+
+## The application
+
+The following is a simple customer support chatbot. It retrieves relevant documentation snippets and uses them to answer user questions. The retriever is mocked here — in a real application you would replace it with a vector search or similar.
+
+<CodeGroup>
+
+```python Python
+from openai import OpenAI
+
+client = OpenAI()
+
+# Product documentation — replace with your own data source
+docs = [
+    "Acme Cloud supports unlimited users on Enterprise plans. Starter plans are limited to 5 users.",
+    "To reset your password, click 'Forgot password' on the login page and follow the instructions sent to your email.",
+    "API rate limits are 1,000 requests per hour on the Starter plan and 10,000 requests per hour on Enterprise.",
+]
+
+def retriever(query: str) -> list[str]:
+    # Replace with a vector search or another retrieval method
+    return docs
+
+def support_bot(question: str) -> str:
+    context = retriever(question)
+    system_message = (
+        "You are a helpful customer support agent. "
+        "Answer using only the information provided below:\n\n"
+        + "\n".join(context)
+    )
+    response = client.chat.completions.create(
+        model="gpt-4.1-mini",
+        messages=[
+            {"role": "system", "content": system_message},
+            {"role": "user", "content": question},
+        ],
+    )
+    return response.choices[0].message.content
+
+if __name__ == "__main__":
+    print(support_bot("How many users can I have on the Starter plan?"))
+```
+
+```typescript TypeScript
+import OpenAI from "openai";
+
+const client = new OpenAI();
+
+// Product documentation — replace with your own data source
+const docs = [
+    "Acme Cloud supports unlimited users on Enterprise plans. Starter plans are limited to 5 users.",
+    "To reset your password, click 'Forgot password' on the login page and follow the instructions sent to your email.",
+    "API rate limits are 1,000 requests per hour on the Starter plan and 10,000 requests per hour on Enterprise.",
+];
+
+function retriever(query: string): string[] {
+    // Replace with a vector search or another retrieval method
+    return docs;
+}
+
+async function supportBot(question: string): Promise<string> {
+    const context = retriever(question);
+    const systemMessage =
+        "You are a helpful customer support agent. " +
+        "Answer using only the information provided below:\n\n" +
+        context.join("\n");
+    const response = await client.chat.completions.create({
+        model: "gpt-4.1-mini",
+        messages: [
+            { role: "system", content: systemMessage },
+            { role: "user", content: question },
+        ],
+    });
+    return response.choices[0].message?.content ?? "";
+}
+
+(async () => {
+    console.log(await supportBot("How many users can I have on the Starter plan?"));
+})();
+```
+
+</CodeGroup>
+
+## Prototyping
+
+Having observability set up from the start lets you iterate faster. You can see exactly what is being sent to the model, what is coming back, and where time is being spent — without adding print statements or running a debugger.
+
+### Set up your environment
+
+Create an API key by navigating to the [LangSmith settings page](https://smith.langchain.com/settings). Then set the following environment variables:
+
+```bash
+export LANGSMITH_TRACING=true
+export LANGSMITH_API_KEY="<your-api-key>"
+```
+
+<project />
+
+<Note>
+You may see these variables referenced as `LANGCHAIN_*` in other places. Both work, but `LANGSMITH_TRACING` and `LANGSMITH_API_KEY` are the recommended names.
+</Note>
+
+### Trace LLM calls
+
+The first thing to trace is your OpenAI calls — this is where the model is actually invoked, so it gives you immediate visibility into what prompts are being sent and what responses are coming back.
+
+Wrap the OpenAI client with `wrap_openai`:
+
+<CodeGroup>
+
+```python Python
+from openai import OpenAI
+from langsmith.wrappers import wrap_openai
+
+client = wrap_openai(OpenAI())
+
+def retriever(query: str) -> list[str]:
+    return docs
+
+def support_bot(question: str) -> str:
+    context = retriever(question)
+    system_message = (
+        "You are a helpful customer support agent. "
+        "Answer using only the information provided below:\n\n"
+        + "\n".join(context)
+    )
+    response = client.chat.completions.create(
+        model="gpt-4.1-mini",
+        messages=[
+            {"role": "system", "content": system_message},
+            {"role": "user", "content": question},
+        ],
+    )
+    return response.choices[0].message.content
+```
+
+```typescript TypeScript
+import OpenAI from "openai";
+import { wrapOpenAI } from "langsmith/wrappers";
+
+const client = wrapOpenAI(new OpenAI());
+
+function retriever(query: string): string[] {
+    return docs;
+}
+
+async function supportBot(question: string): Promise<string> {
+    const context = retriever(question);
+    const systemMessage =
+        "You are a helpful customer support agent. " +
+        "Answer using only the information provided below:\n\n" +
+        context.join("\n");
+    const response = await client.chat.completions.create({
+        model: "gpt-4.1-mini",
+        messages: [
+            { role: "system", content: systemMessage },
+            { role: "user", content: question },
+        ],
+    });
+    return response.choices[0].message?.content ?? "";
+}
+```
+
+</CodeGroup>
+
+Calling `support_bot("How many users can I have on the Starter plan?")` now produces a trace of the OpenAI call — it should look similar to [this](https://smith.langchain.com/public/e7b7d256-10fe-4d49-a8d5-36ca8e5af0d2/r).
+
+![Tracing tutorial openai](/langsmith/images/tracing-tutorial-openai.png)
+
+### Trace the whole pipeline
+
+Tracing the LLM call is useful, but tracing the full pipeline — including retrieval — gives you a complete picture of your application's behavior. Add `@traceable` to the main function:
+
+<CodeGroup>
+
+```python Python
+from openai import OpenAI
+from langsmith import traceable
+from langsmith.wrappers import wrap_openai
+
+client = wrap_openai(OpenAI())
+
+def retriever(query: str) -> list[str]:
+    return docs
+
+@traceable
+def support_bot(question: str) -> str:
+    context = retriever(question)
+    system_message = (
+        "You are a helpful customer support agent. "
+        "Answer using only the information provided below:\n\n"
+        + "\n".join(context)
+    )
+    response = client.chat.completions.create(
+        model="gpt-4.1-mini",
+        messages=[
+            {"role": "system", "content": system_message},
+            {"role": "user", "content": question},
+        ],
+    )
+    return response.choices[0].message.content
+```
+
+```typescript TypeScript
+import OpenAI from "openai";
+import { wrapOpenAI, traceable } from "langsmith/wrappers";
+
+const client = wrapOpenAI(new OpenAI());
+
+function retriever(query: string): string[] {
+    return docs;
+}
+
+const supportBot = traceable(async (question: string): Promise<string> => {
+    const context = retriever(question);
+    const systemMessage =
+        "You are a helpful customer support agent. " +
+        "Answer using only the information provided below:\n\n" +
+        context.join("\n");
+    const response = await client.chat.completions.create({
+        model: "gpt-4.1-mini",
+        messages: [
+            { role: "system", content: systemMessage },
+            { role: "user", content: question },
+        ],
+    });
+    return response.choices[0].message?.content ?? "";
+});
+```
+
+</CodeGroup>
+
+Calling `support_bot("How many users can I have on the Starter plan?")` now produces a trace of the full RAG pipeline — it should look similar to [this](https://smith.langchain.com/public/8cafba6a-1a6d-4a73-8565-483186f31c29/r).
+
+![Tracing tutorial chain](/langsmith/images/tracing-tutorial-chain.png)
+
+## Beta testing
+
+Once your app is working well in prototyping, you release it to a small group of real users. At this stage, you often don't know exactly how users will interact with your app, so you need richer observability — not just what the app did, but how users responded to it.
+
+### Collect feedback
+
+Linking user feedback to specific traces lets you identify which responses were helpful or unhelpful. The simplest approach is to assign a run ID to each call and use it to attach feedback afterward.
+
+<CodeGroup>
+
+```python Python
+from langsmith import uuid7
+
+run_id = str(uuid7())
+support_bot(
+    "How many users can I have on the Starter plan?",
+    langsmith_extra={"run_id": run_id},
+)
+```
+
+```typescript TypeScript
+import { v4 as uuidv4 } from "uuid";
+
+const runId = uuidv4();
+await supportBot("How many users can I have on the Starter plan?", {
+    langsmithExtra: { runId },
+});
+```
+
+</CodeGroup>
+
+Once you have a run ID, attach feedback using the LangSmith client:
+
+<CodeGroup>
+
+```python Python
+from langsmith import Client
+
+ls_client = Client()
+ls_client.create_feedback(
+    run_id,
+    key="user-score",
+    score=1.0,
+)
+```
+
+```typescript TypeScript
+import { Client } from "langsmith";
+
+const lsClient = new Client();
+await lsClient.createFeedback(runId, "user-score", { score: 1.0 });
+```
+
+</CodeGroup>
+
+The feedback appears in the **Metadata** tab when you inspect the run in LangSmith:
+
+![Tracing tutorial feedback](/langsmith/images/tracing-tutorial-feedback.png)
+
+You can then filter runs by feedback score using the filtering controls in the runs table:
+
+![Tracing tutorial filtering](/langsmith/images/tracing-tutorial-filtering.png)
+
+### Log metadata
+
+Metadata lets you tag runs with attributes useful for filtering and comparison — for example, which model version was used or which user made the request.
+
+The following example traces both the retriever (with `run_type="retriever"`) and the main function (with a `metadata` attribute for the model name):
+
+<CodeGroup>
+
+```python Python
+from openai import OpenAI
+from langsmith import traceable
+from langsmith.wrappers import wrap_openai
+
+client = wrap_openai(OpenAI())
+
+@traceable(run_type="retriever")
+def retriever(query: str) -> list[str]:
+    return docs
+
+@traceable(metadata={"llm": "gpt-4.1-mini"})
+def support_bot(question: str) -> str:
+    context = retriever(question)
+    system_message = (
+        "You are a helpful customer support agent. "
+        "Answer using only the information provided below:\n\n"
+        + "\n".join(context)
+    )
+    response = client.chat.completions.create(
+        model="gpt-4.1-mini",
+        messages=[
+            {"role": "system", "content": system_message},
+            {"role": "user", "content": question},
+        ],
+    )
+    return response.choices[0].message.content
+```
+
+```typescript TypeScript
+import OpenAI from "openai";
+import { wrapOpenAI, traceable } from "langsmith/wrappers";
+
+const client = wrapOpenAI(new OpenAI());
+
+const retriever = traceable(
+    (query: string): string[] => docs,
+    { runType: "retriever" }
+);
+
+const supportBot = traceable(
+    async (question: string): Promise<string> => {
+        const context = await retriever(question);
+        const systemMessage =
+            "You are a helpful customer support agent. " +
+            "Answer using only the information provided below:\n\n" +
+            context.join("\n");
+        const response = await client.chat.completions.create({
+            model: "gpt-4.1-mini",
+            messages: [
+                { role: "system", content: systemMessage },
+                { role: "user", content: question },
+            ],
+        });
+        return response.choices[0].message?.content ?? "";
+    },
+    { metadata: { llm: "gpt-4.1-mini" } }
+);
+```
+
+</CodeGroup>
+
+You can also attach metadata at call time — for example, to record which user made the request:
+
+<CodeGroup>
+
+```python Python
+from langsmith import uuid7
+
+run_id = str(uuid7())
+support_bot(
+    "How many users can I have on the Starter plan?",
+    langsmith_extra={"run_id": run_id, "metadata": {"user_id": "user-123"}},
+)
+```
+
+```typescript TypeScript
+const runId = uuidv4();
+await supportBot("How many users can I have on the Starter plan?", {
+    langsmithExtra: { runId, metadata: { userId: "user-123" } },
+});
+```
+
+</CodeGroup>
+
+Both metadata values appear on the trace:
+
+![Tracing tutorial metadata](/langsmith/images/tracing-tutorial-metadata.png)
+
+You can filter runs by metadata using the filtering controls:
+
+![Tracing tutorial metadata filtering](/langsmith/images/tracing-tutorial-metadata-filtering.png)
+
+## Production
+
+With strong observability in place, you can confidently ship to production. In production, you have significantly more traffic and can't examine every trace individually. LangSmith provides monitoring tools to help you understand aggregate behavior and drill down when something looks wrong.
+
+### Monitoring
+
+Click the **Monitor** tab in a tracing project to see charts tracking key metrics over time: number of traces, latency, time-to-first-token, feedback scores, and more.
+
+![Tracing tutorial monitor](/langsmith/images/tracing-tutorial-monitor.png)
+
+### A/B testing
+
+<Note>
+Group-by functionality requires at least two different values for a given metadata key.
+</Note>
+
+Because you have been logging the `llm` metadata attribute, you can group monitoring charts by that attribute to compare model performance over time. Click **Metadata** at the top of the Monitor tab to select a grouping attribute:
+
+![Tracing tutorial monitor metadata](/langsmith/images/tracing-tutorial-monitor-metadata.png)
+
+The charts update to show results grouped by that attribute:
+
+![Tracing tutorial monitor grouped](/langsmith/images/tracing-tutorial-monitor-grouped.png)
+
+### Drilldown
+
+When a monitoring chart shows something unexpected, click a data point to jump directly to the filtered runs table for that time window:
+
+![Tracing tutorial monitor drilldown](/langsmith/images/tracing-tutorial-monitor-drilldown.png)
+
+## Conclusion
+
+In this tutorial you added LangSmith observability to a RAG application across its full development lifecycle. The same tracing setup that helps you iterate quickly during prototyping will continue to provide value in production — giving you visibility into individual traces and aggregate performance trends.
+
+For more, see:
+
+- [Observability concepts](/langsmith/observability-concepts) — terminology and core ideas.
+- [Tracing integrations](/langsmith/trace-with-langchain) — LangChain, LangGraph, Anthropic, and other providers.
+- [Automations](/langsmith/rules) — rules and online evaluations that run automatically on your traces.
+
+---
+
+<div className="source-links">
+<Callout icon="edit">
+    [Edit this page on GitHub](https://github.com/langchain-ai/docs/edit/main/src/langsmith/observability-llm-tutorial.mdx) or [file an issue](https://github.com/langchain-ai/docs/issues/new/choose).
+</Callout>
+<Callout icon="terminal-2">
+    [Connect these docs](/use-these-docs) to Claude, VSCode, and more via MCP for real-time answers.
+</Callout>
+</div>
