@@ -240,6 +240,7 @@ LINK_MAPS: list[LinkMap] = [
             "RemoteGraph": "langgraph/pregel/remote/RemoteGraph",
             "RemoteGraph.as_tool": "langsmith/deployment/remote_graph/#langgraph.pregel.remote.RemoteGraph.as_tool",
             "get_stream_writer": "langgraph/config/get_stream_writer",
+            "get_state": "langgraph/graphs/#langgraph.graph.state.CompiledStateGraph.get_state",
             "StateGraph": "langgraph/graph/state/StateGraph",
             "StateGraph.compile": "langgraph/graph/state/StateGraph/compile",
             "add_edge": "langgraph/pregel/_draw/add_edge",
@@ -399,6 +400,8 @@ LINK_MAPS: list[LinkMap] = [
             "StdioConnection": "langchain-mcp-adapters/sessions/StdioConnection",
             "StreamableHttpConnection": "langchain-mcp-adapters/sessions/StreamableHttpConnection",
             "WebsocketConnection": "langchain-mcp-adapters/sessions/WebsocketConnection",
+            # JS-only references added here for cross-scope compatibility
+            "createAgent": "https://reference.langchain.com/javascript/langchain/index/createAgent",
             # LangSmith SDK - Vitest/Jest references (JS-only, but added here for cross-scope compatibility)
             "langsmith.vitest": "https://reference.langchain.com/javascript/modules/langsmith.vitest.html",
             "langsmith/vitest": "https://reference.langchain.com/javascript/modules/langsmith.vitest.html",
@@ -521,6 +524,13 @@ LINK_MAPS: list[LinkMap] = [
             "updateState": "classes/_langchain_langgraph.pregel.Pregel.html#updateState",
             "Runtime": "langchain/index/Runtime",
             "ToolNode": "langchain-langgraph/prebuilt/ToolNode",
+            # Python-named aliases for cross-scope compatibility
+            "get_state": "classes/_langchain_langgraph.pregel.Pregel.html#getState",
+            "create_agent": "langchain/index/createAgent",
+            "init_chat_model": "langchain/chat_models/universal/initChatModel",
+            "tools_condition": "langchain-langgraph/prebuilt/toolsCondition",
+            "ToolRuntime": "langchain/index/Runtime",
+            "RunnableLambda": "langchain-core/runnables/RunnableLambda",
             # LangSmith Deployment SDK - JS
             "LangGraphSDK": "langgraph-sdk/",
             "ThreadsClient": "langchain-langgraph-sdk/client/ThreadsClient",
