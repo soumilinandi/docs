@@ -85,6 +85,8 @@ def check_cross_refs(src_dir: Path) -> list[tuple[str, int, str, list[str]]]:
 
         if rel_path.startswith("snippets/code-samples/"):
             continue
+        if "node_modules" in rel_path:
+            continue
 
         content = file_path.read_text(encoding="utf-8")
         default_scopes = _default_scopes_for_file(rel_path)
