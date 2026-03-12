@@ -4,7 +4,7 @@ sidebarTitle: Model providers
 description: Configure any LangChain-compatible model provider for the Deep Agents CLI
 ---
 
-The Deep Agents CLI supports any [chat model provider compatible with LangChain](/oss/langchain/models), unlocking use for virtually any LLM that supports tool calling. Any service that exposes an OpenAI-compatible or Anthropic-compatible API also works out of the box—see [Compatible APIs](#compatible-apis).
+The Deep Agents CLI supports any [chat model provider compatible with LangChain](/oss/langchain/models), unlocking use for virtually any LLM that supports tool calling. Any service that exposes an OpenAI-compatible or Anthropic-compatible API also works out of the box—see [Compatible APIs](/oss/deepagents/cli/configuration#compatible-apis).
 
 ## Quick start
 
@@ -34,7 +34,7 @@ The CLI integrates automatically with the [following model providers](#provider-
 
 ### Provider reference
 
-Using a provider not listed here? See [Arbitrary providers](#arbitrary-providers): any LangChain-compatible provider can be used in the CLI with some additional setup.
+Using a provider not listed here? See [Arbitrary providers](/oss/deepagents/cli/configuration#arbitrary-providers): any LangChain-compatible provider can be used in the CLI with some additional setup.
 
 :::python
 | Provider | Package | Credential env var | Model profiles |
@@ -116,7 +116,7 @@ The interactive `/model` selector builds its list dynamically—it is not a hard
     max_output_tokens = 8192
     ```
 
-    This is not strictly required for the model to appear in the switcher — adding it to the [`models` list](#adding-models-to-the-interactive-switcher) also works and is simpler. A profile is useful when you want the CLI to know the model's context window and capabilities for features like auto-summarization. See [Profile overrides](/oss/deepagents/cli/configuration#profile-overrides) for all overridable fields.
+    This is not strictly required for the model to appear in the switcher — adding it to the [`models` list](/oss/deepagents/cli/configuration#adding-models-to-the-interactive-switcher) also works and is simpler. A profile is useful when you want the CLI to know the model's context window and capabilities for features like auto-summarization. See [Profile overrides](/oss/deepagents/cli/configuration#profile-overrides) for all overridable fields.
 3. **The model accepts and produces text.** Models whose profile explicitly sets `text_inputs` or `text_outputs` to `false` (e.g. embedding or image-generation models) are excluded.
 
 Models defined in `config.toml` under [`[models.providers.<name>].models`](/oss/deepagents/cli/configuration#adding-models-to-the-interactive-switcher) bypass the profile filter—they always appear in the switcher regardless of profile metadata. This is the recommended way to add models that are missing from the list.
